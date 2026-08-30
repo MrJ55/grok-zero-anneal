@@ -1,0 +1,11 @@
+{
+  "tasks": [
+    {
+      "id": "t1-parse",
+      "title": "Implement parse_worker_response",
+      "status": "pending",
+      "target": "scripts/codegen_parse.py",
+      "deps": []
+    }
+  ]
+}

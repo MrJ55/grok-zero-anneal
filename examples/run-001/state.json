@@ -1,0 +1,9 @@
+{
+  "completed": [
+    "t1-parse"
+  ],
+  "attempts": {
+    "t1-parse": 3
+  },
+  "manager_escalation": "Fixed truncated extraction from worker a1 (nested fences in docstring broke sequencer extract_code)"
+}

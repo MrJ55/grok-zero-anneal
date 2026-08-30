@@ -1,0 +1,3 @@
+{"task": "t1-parse", "attempt": 1, "raw_path": "out/t1-parse-a1.md"}
+{"task": "t1-parse", "attempt": 2, "error": "HTTP Error 429: Too Many Requests"}
+{"task": "t1-parse", "attempt": 3, "error": "HTTP Error 429: Too Many Requests"}

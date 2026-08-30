@@ -1,0 +1,10 @@
+.env
+.env.*
+*.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+runs/
+*.egg-info/
+OPENROUTER_API_KEY
