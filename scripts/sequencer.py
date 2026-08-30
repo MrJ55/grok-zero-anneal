@@ -8,12 +8,13 @@ import os
 import sys
 from pathlib import Path
 
-# allow running from repo root
 _REPO = Path(__file__).resolve().parents[1]
 if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 
 from scripts.codegen_parse import parse_worker_response  # noqa: E402
+from scripts.state_store import bump_attempt, load_state, mark_complete, save_state  # noqa: E402
+from scripts.task_graph import ready_tasks, validate_tasks, wave_for_parallel  # noqa: E402
 from scripts.worker_client import WorkerError, make_worker  # noqa: E402
 
 if os.environ.get("RUN_DIR"):
@@ -31,16 +32,6 @@ def log(event: dict) -> None:
     TRANSCRIPT.parent.mkdir(parents=True, exist_ok=True)
     with TRANSCRIPT.open("a", encoding="utf-8") as f:
         f.write(json.dumps(event, ensure_ascii=False) + "\n")
-
-
-def load_state() -> dict:
-    if STATE_PATH.exists():
-        return json.loads(STATE_PATH.read_text(encoding="utf-8"))
-    return {"completed": [], "attempts": {}}
-
-
-def save_state(state: dict) -> None:
-    STATE_PATH.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 
 SYSTEM = (
@@ -74,18 +65,6 @@ def run_tests(pytest_args: list[str] | None = None) -> tuple[int, str]:
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
 
 
-def ready_tasks(tasks: list[dict], completed: set[str]) -> list[dict]:
-    out = []
-    for t in tasks:
-        tid = t["id"]
-        if tid in completed:
-            continue
-        deps = t.get("deps") or []
-        if all(d in completed for d in deps):
-            out.append(t)
-    return out
-
-
 def run_one_task(task: dict, state: dict, max_attempts: int) -> bool:
     tid = task["id"]
     brief_path = RUN / "briefs" / f"{tid}.md"
@@ -96,10 +75,14 @@ def run_one_task(task: dict, state: dict, max_attempts: int) -> bool:
     worker = make_worker()
 
     while attempts < max_attempts:
-        attempts += 1
-        state["attempts"][tid] = attempts
-        save_state(state)
-        print(f"== worker {tid} attempt {attempts} model={worker.config.model} backend={worker.config.backend}")
+        attempts = bump_attempt(state, tid)
+        # bump_attempt already incremented; sync loop var
+        attempts = int(state["attempts"][tid])
+        save_state(STATE_PATH, state)
+        print(
+            f"== worker {tid} attempt {attempts} "
+            f"model={worker.config.model} backend={worker.config.backend}"
+        )
         try:
             raw = worker.generate(SYSTEM, brief)
         except WorkerError as e:
@@ -122,8 +105,8 @@ def run_one_task(task: dict, state: dict, max_attempts: int) -> bool:
         (out_dir / f"{tid}-a{attempts}-pytest.txt").write_text(tout, encoding="utf-8")
         print(tout)
         if rc == 0:
-            state["completed"].append(tid)
-            save_state(state)
+            mark_complete(state, tid)
+            save_state(STATE_PATH, state)
             print(f"PASS {tid}")
             return True
         print(f"FAIL tests attempt {attempts}")
@@ -142,7 +125,8 @@ def main() -> int:
     if not tasks_path.exists():
         raise SystemExit(f"missing {tasks_path}; set RUN_DIR")
     tasks = json.loads(tasks_path.read_text(encoding="utf-8"))["tasks"]
-    state = load_state()
+    validate_tasks(tasks)
+    state = load_state(STATE_PATH)
     max_attempts = int(os.environ.get("MAX_ATTEMPTS", "3"))
     completed = set(state.get("completed") or [])
 
@@ -156,11 +140,7 @@ def main() -> int:
             print("ALL DONE")
             return 0
 
-        # Parallel only for independent ready tasks with distinct targets
-        wave = ready[: max(1, MAX_WORKERS)]
-        targets = [t.get("target") for t in wave]
-        if len(targets) != len(set(targets)):
-            wave = wave[:1]
+        wave = wave_for_parallel(ready, MAX_WORKERS)
 
         if len(wave) == 1 or MAX_WORKERS <= 1:
             ok = run_one_task(wave[0], state, max_attempts)
@@ -171,21 +151,27 @@ def main() -> int:
 
         print(f"== parallel wave size={len(wave)} max={MAX_WORKERS}")
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(wave)) as ex:
-            # each task needs isolated state attempts updates — serialize state writes via result merge
             futs = {
-                ex.submit(run_one_task, t, {"completed": list(completed), "attempts": dict(state.get("attempts") or {})}, max_attempts): t
+                ex.submit(
+                    run_one_task,
+                    t,
+                    {
+                        "completed": list(completed),
+                        "attempts": dict(state.get("attempts") or {}),
+                    },
+                    max_attempts,
+                ): t
                 for t in wave
             }
             for fut in concurrent.futures.as_completed(futs):
                 t = futs[fut]
                 ok = fut.result()
                 if ok:
-                    if t["id"] not in state["completed"]:
-                        state["completed"].append(t["id"])
+                    mark_complete(state, t["id"])
                 else:
-                    save_state(state)
+                    save_state(STATE_PATH, state)
                     return 1
-            save_state(state)
+            save_state(STATE_PATH, state)
             completed = set(state.get("completed") or [])
 
 
