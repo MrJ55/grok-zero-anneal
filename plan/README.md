@@ -6,7 +6,9 @@
 |-------|--------|--------|
 | 0 | WorkerClient + Zen Muse | **Done** |
 | 1 | Ledger helpers | **Done** |
-| 2 | Multi-unit fan-out dogfood | **Done** (`examples/run-002/`) |
-| 3 | Anneal stages | **Done** (`docs/phase-3-results.md`) |
-| 4 | Playbooks | Partial (docs); polish next |
-| 5 | Packaging | Pending |
+| 2 | Multi-unit fan-out dogfood | **Done** |
+| 3 | Anneal stages | **Done** |
+| 4 | Playbooks | **Done** |
+| 5 | Packaging / v0 | **Done** |
+
+**v0 complete.** Further work: harder dogfood goals, CI workflow file, paid Go models, richer ideation.

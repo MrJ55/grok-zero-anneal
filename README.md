@@ -1,23 +1,40 @@
 # grok-zero-anneal
 
-**Grok-as-manager** + pure no-tool workers + restartable sequencer.
+**Grok-as-manager** + pure no-tool workers + restartable sequencer with anneal stages.
 
-**Start here:** [WIKI.md](./WIKI.md)
+**v0 complete** (phases 0–5). Start: [WIKI.md](./WIKI.md) · Playbook: [docs/manager-playbook.md](./docs/manager-playbook.md)
 
-| Phase | Status |
-|-------|--------|
-| 0 Muse WorkerClient | Done |
-| 1 Ledger helpers | Done |
-| 2 4-worker dogfood | **Done** (~38s, 4/4 pass) |
-| 3 Anneal stages | Next |
+## Quick start
 
 ```bash
+pip install -e ".[dev]"   # optional; or: pip install pytest
+
+export OPENCODE_API_KEY=...   # OpenCode Zen; never commit
 export WORKER_BACKEND=zen_responses
-export OPENCODE_API_KEY=...   # x-api-key auth; never commit
-export RUN_DIR=$PWD/runs/<id>
-export MAX_PARALLEL_WORKERS=4
-PYTHONPATH=. python scripts/sequencer.py
+export WORKER_MODEL=muse-spark-1.2-contributor-free
+
+python -m scripts.cli init-run runs/demo --goal "my goal"
+# add tasks.json entries, briefs/, workspace/tests/
+
+export RUN_DIR=$PWD/runs/demo
+python -m scripts.cli run --parallel 4
 pytest tests -q
+python -m scripts.cli check-auth   # optional smoke
 ```
 
-Paste [docs/CUSTOM_INSTRUCTIONS.md](./docs/CUSTOM_INSTRUCTIONS.md) into project instructions for blank sessions.
+Workers default to **OpenCode Zen Muse** (`POST /zen/v1/responses`, **`x-api-key`**).  
+Chat-completions backends (MiMo, OpenCode Go): `WORKER_BACKEND=openai_chat` + base URL/model.
+
+## Custom instructions
+
+Paste [docs/CUSTOM_INSTRUCTIONS.md](./docs/CUSTOM_INSTRUCTIONS.md) into the Grok project so blank sessions keep manager role.
+
+## Layout
+
+```text
+plan/  docs/  adr/  scripts/  tests/  templates/run/  examples/
+```
+
+## License
+
+MIT for code in this repo unless noted.
