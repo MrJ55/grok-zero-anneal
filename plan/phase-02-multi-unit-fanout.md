@@ -1,44 +1,27 @@
-# Phase 2 — Multi-unit fan-out (2–5 workers)
+# Phase 2 — Multi-unit fan-out dogfood
 
 ## Goals
 
-Sequencer (or manager loop) executes a **task graph**: ready tasks = deps satisfied; dispatch up to K workers (K=2..5).
+Prove **cost model in practice:** free Muse workers implement 3–4 independent units; Grok only briefs, tests, gates, fixes contracts.
 
-## Manager-only tasks
+## Demo library (`workspace/pkg/`)
 
-- [ ] **M2.1** Task schema: `id`, `target`, `deps[]`, `pytest_args`, `status`.
-- [ ] **M2.2** Ready-set algorithm (deterministic): topological waves.
-- [ ] **M2.3** Placement policy: one writer to a given `target` path (no parallel writers on same file).
-- [ ] **M2.4** Integration gate after each wave (full pytest or subset).
-- [ ] **M2.5** Design a **demo goal** with 3–5 independent pure-Python units (see playbook).
-
-## Worker-eligible units (sequencer features — 3–5)
-
-| ID | Target | Brief | Deps |
-|----|--------|-------|------|
-| **W2.1** | `scripts/task_graph.py` | `ready_tasks(tasks, completed) -> list` | none |
-| **W2.2** | `scripts/task_graph.py` or tests | Cycle detection / validate deps | W2.1 |
-| **W2.3** | `scripts/sequencer.py` | Wave loop: for ready in waves: run unit (sequential first) | W2.1, Phase 0 client |
-| **W2.4** | `tests/test_task_graph.py` | Graph fixtures | W2.1 |
-| **W2.5** | optional `scripts/parallel_dispatch.py` | Concurrent futures for **independent** targets only; K from env | W2.3 |
-
-**Recommended first multi-worker coding session (product dogfood):**  
-After sequencer can run waves, manager defines demo tasks D1–D4 (below) and fans **3–4 workers** on independent modules.
-
-### Demo goal (dogfood) — suggested units
-
-Implement a tiny `workspace/pkg/` library with independent modules:
-
-| ID | Module | Contract |
+| ID | Target | Contract |
 |----|--------|----------|
-| D1 | `slugify(text) -> str` | ASCII slug |
-| D2 | `clamp(x, lo, hi)` | numeric |
-| D3 | `parse_kv(line) -> dict` | `k=v` pairs |
-| D4 | `merkle_hash(parts: list[str]) -> str` | sha256 hex of joined parts |
+| D1 | `pkg/textutil.py` | `slugify(text: str) -> str` |
+| D2 | `pkg/numutil.py` | `clamp(x: float, lo: float, hi: float) -> float` |
+| D3 | `pkg/parseutil.py` | `parse_kv(line: str) -> dict[str, str]` |
+| D4 | `pkg/hashutil.py` | `merkle_join(parts: list[str]) -> str` sha256 hex of `"\\x00".join(parts)` |
 
-Manager writes tests first; workers implement; no cross-deps → **4-way fan-out**.
+All deps empty → one parallel wave with `MAX_PARALLEL_WORKERS=3` or `4`.
+
+## Manager-only
+
+- [x] Task graph + tests authored by manager
+- [ ] Dispatch Muse workers (not manager-written implementations)
+- [ ] Log cost note: worker $≈0; manager rewrites count as cost leak
 
 ## Exit criteria
 
-- [ ] One run completes ≥3 units with K≥2 without manager rewriting successful units.
-- [ ] Same-file parallel dispatch refused or serialized.
+- [ ] ≥3 units green without manager rewriting successful units
+- [ ] Entry in learnings-log with K and cost note
