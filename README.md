@@ -1,44 +1,22 @@
 # grok-zero-anneal
 
-**Grok-as-manager** orchestration: pure **no-tool** codegen workers + a restartable Python sequencer.
+**Grok-as-manager** + pure no-tool HTTP workers + restartable sequencer.
 
-**Default worker (Phase 0):** [OpenCode Zen](https://opencode.ai/docs/zen/) **Muse** via `POST /zen/v1/responses` (`muse-spark-1.2-contributor-free`).  
-Not tied to OpenRouter. Chat-completions backends (MiMo, OpenCode Go) supported via `WORKER_BACKEND=openai_chat`.
+**Start here:** **[WIKI.md](./WIKI.md)** — handoff, custom instructions, learnings, skills proposals, plan.
 
-## Roles
-
-| Role | Who |
-|------|-----|
-| User | Goal only |
-| **Manager** | **Grok** — plan, brief, place, gate, replan |
-| **Sequencer** | `scripts/sequencer.py` |
-| **Workers** | HTTP text only — Muse Responses by default |
-
-## Phase 0 status
-
-Done: provider-agnostic client, Muse smoke, **parallel K=2..5** probe on trivial prompts.  
-Details: [`docs/phase-0-results.md`](./docs/phase-0-results.md) · plan: [`plan/`](./plan/).
+Default worker: OpenCode Zen **Muse** (`zen_responses` / `/responses`). Parallel K=2–5 measured on trivial prompts; use K=2–3 for real codegen.
 
 ```bash
 export WORKER_BACKEND=zen_responses
-export OPENCODE_API_KEY=...          # Zen key
+export OPENCODE_API_KEY=...
 export WORKER_MODEL=muse-spark-1.2-contributor-free
 export RUN_DIR=$PWD/runs/<id>
-export MAX_PARALLEL_WORKERS=1        # raise when targets are disjoint
+export MAX_PARALLEL_WORKERS=1
 python scripts/sequencer.py
 pytest tests -q
 ```
 
-## Plan overview
-
-| Phase | Focus | Status |
-|-------|--------|--------|
-| 0 | WorkerClient + Zen/Muse | **Done** |
-| 1 | Ledger hardening | Next |
-| 2 | Multi-unit fan-out dogfood | Pending |
-| 3–5 | Stages, playbooks, package | Pending |
-
-Sibling: [pi-zero-shot](https://github.com/MrJ55/pi-zero-shot) (Pi extension path).
+Sibling: [pi-zero-shot](https://github.com/MrJ55/pi-zero-shot) (Pi path — separate).
 
 ## License
 

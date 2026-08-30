@@ -6,51 +6,41 @@
 User goal
     │
     ▼
-Grok (manager) ── tools: files, shell, git, browser as needed
-    │  writes plan, tasks.json, briefs/, sequencer config
-    │  runs: python scripts/openrouter_sequencer.py
+Grok (manager) — tools: files, shell, git
+    │  plan, tasks, briefs, tests
+    │  python scripts/sequencer.py
     ▼
 Sequencer (deterministic)
-    │  for each pending task:
-    │    load brief → OpenRouter completion (worker) → parse ## code
-    │    write workspace file → pytest / gate → update state.json
-    │  on fail: augment brief with gate output, retry up to MAX_ATTEMPTS
+    │  ready-set from deps → wave (1..MAX_PARALLEL_WORKERS)
+    │  WorkerClient.generate (no tools) → parse ## code → place → pytest
     ▼
-Grok reads out/, state.json, notes
-    │  escalate: fix extractors, place code, split tasks, rewrite sequencer
-    └─ loop until done or budget stop
+Grok reads out/, state.json → rebrief / fix / replan
 ```
+
+## Worker backends
+
+| Backend | Env `WORKER_BACKEND` | Endpoint | Default model |
+|---------|----------------------|----------|---------------|
+| Zen Responses | `zen_responses` | `{base}/responses` | `muse-spark-1.2-contributor-free` |
+| OpenAI chat | `openai_chat` | `{base}/chat/completions` | `mimo-v2.5-free` |
+
+Base default: `https://opencode.ai/zen/v1`. Auth: `x-api-key`.
 
 ## Invariants
 
-1. **Workers have no tools** — HTTP chat only; no repo, no shell.
-2. **Manager owns the tree** — only Grok (or sequencer under Grok’s scripts) writes project files.
-3. **Shared state is on disk** — `tasks.json`, `state.json`, `plan.md`, `notes.md`, `transcript.jsonl`, `workspace/`.
-4. **Gates are mechanical** when possible — pytest/tsc, not an LLM with tools claiming PASS.
-5. **Restartable** — completed task ids in `state.json` are skipped.
+1. Workers: no tools, no repo access.
+2. Manager owns tree and gates.
+3. State on disk: `tasks.json`, `state.json`, `transcript.jsonl`, `workspace/`.
+4. Parallel only for disjoint targets.
+5. No secrets in git.
 
-## Worker contract
+## Key modules
 
-Workers must answer with:
-
-```markdown
-## code
-
-```python
-...
-```
-
-## notes
-
-...
-```
-
-Avoid triple-backtick sequences inside docstrings (breaks naive fence parsers). Prefer plain quotes in docstrings.
-
-Parser: `scripts/codegen_parse.py` and sequencer `extract_code` (outer-fence aware).
-
-## Models
-
-- Default worker experiment: `poolside/laguna-s-2.1:free` via OpenRouter.
-- Manager is whatever hosts Grok (not billed as worker tokens).
-- Asymmetric setups are encouraged (cheap bulk codegen, strong manager judgment).
+| Module | Role |
+|--------|------|
+| `scripts/worker_client.py` | HTTP workers |
+| `scripts/codegen_parse.py` | Parse worker markdown |
+| `scripts/state_store.py` | Atomic state helpers |
+| `scripts/task_graph.py` | Ready-set / deps |
+| `scripts/brief_format.py` | Brief text from structured fields |
+| `scripts/sequencer.py` | Orchestration loop |
