@@ -1,24 +1,19 @@
-# Phase 3 — Anneal-style stages in the sequencer
+# Phase 3 — Anneal-style stages — DONE
 
 ## Goals
 
 Encode explicit stages without toolful workers: implement vs mechanical verify vs manager fix policy.
 
-## Manager-only tasks
+## Completed
 
-- [ ] **M3.1** Stage enum: `implement` | `verify` | `manager_fix` (verify = pytest only).
-- [ ] **M3.2** Retry policy: on verify fail → rebrief same worker (implement) up to N; then `manager_fix`.
-- [ ] **M3.3** Optional “ideation” worker: notes-only, no code (ledger `notes.md`).
-
-## Worker-eligible units (2–3)
-
-| ID | Target | Brief |
-|----|--------|-------|
-| **W3.1** | `scripts/stages.py` | Pure functions: next_stage(state) → stage |
-| **W3.2** | `scripts/rebrief.py` | `append_pytest_failure(brief, output) -> str` |
-| **W3.3** | tests for stages/rebrief | fixtures |
+- [x] **M3.1** `Stage` enum: implement | verify | manager_fix | done
+- [x] **M3.2** Retry via rebrief until MAX_ATTEMPTS → manager_fix
+- [x] **M3.3** Optional ideation (`task.ideation: true` → notes.md)
+- [x] **W3.1** `scripts/stages.py`
+- [x] **W3.2** `scripts/rebrief.py`
+- [x] **W3.3** unit tests
 
 ## Exit criteria
 
-- [ ] Transcript records stage transitions.
-- [ ] Manager fix path documented and used only after N worker fails.
+- [x] Transcript records stage transitions
+- [x] Manager fix path documented (`docs/phase-3-results.md`)

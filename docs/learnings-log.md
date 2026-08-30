@@ -42,11 +42,18 @@ Wall-clock scales; token volume still ×K; $ ~0 on free.
 **Manager work:** tests + briefs + sequencer only; **no implementation rewrites**  
 **K / wall / pass rate:** K=4, **~38.4s**, **4/4 first attempt**  
 **Cost note:** worker $≈0; strong model not used for bulk code  
-**Units:** slugify, clamp, parse_kv, merkle_join  
-**Problems / solutions:** Initial 401 from dual auth headers → x-api-key only  
 **Artifact:** `examples/run-002/`
 
-**Throughput takeaway:** Independent micro-units + tight tests → parallel workers deliver full feature slice in <1 minute wall without manager coding.
+---
+
+## 2026-08-30 — Phase 3 anneal stages
+
+**Goal / phase:** Explicit implement → verify → manager_fix  
+**Worker model ($):** N/A for pure unit tests; runtime uses Muse as before  
+**Manager work:** Implemented `stages.py`, `rebrief.py`, sequencer integration  
+**Behavior:** Transcript + `state.stages` record transitions; after MAX_ATTEMPTS verify fails → `manager_fix` (no silent give-up)  
+**Optional:** `task.ideation: true` notes-only worker  
+**Artifact:** `docs/phase-3-results.md`
 
 ---
 
