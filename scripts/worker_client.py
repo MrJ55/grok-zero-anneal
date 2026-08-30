@@ -67,15 +67,18 @@ def _http_json(
     api_key: str,
     timeout: float,
     user_agent: str,
+    auth_style: str = "x-api-key",
 ) -> dict:
     data = json.dumps(payload).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
         "User-Agent": user_agent,
-        # Zen accepts x-api-key; Bearer often 401 on this gateway
-        "x-api-key": api_key,
-        "Authorization": f"Bearer {api_key}",
     }
+    # Zen rejects Bearer (401 Invalid API key). Use x-api-key only for Zen.
+    if auth_style == "bearer":
+        headers["Authorization"] = f"Bearer {api_key}"
+    else:
+        headers["x-api-key"] = api_key
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -96,7 +99,6 @@ def extract_responses_text(data: dict) -> str:
                 parts.append(c["text"])
     if parts:
         return "\n".join(parts).strip()
-    # fallbacks
     if isinstance(data.get("output_text"), str) and data["output_text"].strip():
         return data["output_text"].strip()
     raise WorkerError("no assistant text in responses payload", body=json.dumps(data)[:500])
@@ -110,7 +112,6 @@ def extract_chat_text(data: dict) -> str:
     if content is None:
         raise WorkerError("empty chat content", body=json.dumps(data)[:500])
     if isinstance(content, list):
-        # multimodal style
         texts = [c.get("text", "") for c in content if isinstance(c, dict)]
         return "\n".join(t for t in texts if t).strip()
     return str(content).strip()
@@ -122,8 +123,8 @@ class HttpWorker:
 
     def generate(self, system: str, user: str, *, model: str | None = None) -> str:
         model = model or self.config.model
+        auth_style = "x-api-key" if self.config.backend == "zen_responses" else "bearer"
         if self.config.backend == "zen_responses":
-            # Prefer single input string; include system as prefix for simple workers
             prompt = user if not system else f"{system.rstrip()}\n\n{user}"
             url = f"{self.config.base_url}/responses"
             data = _http_json(
@@ -132,6 +133,7 @@ class HttpWorker:
                 api_key=self.config.api_key,
                 timeout=self.config.timeout,
                 user_agent=self.config.user_agent,
+                auth_style=auth_style,
             )
             return extract_responses_text(data)
 
@@ -146,6 +148,7 @@ class HttpWorker:
             api_key=self.config.api_key,
             timeout=self.config.timeout,
             user_agent=self.config.user_agent,
+            auth_style=auth_style,
         )
         return extract_chat_text(data)
 

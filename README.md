@@ -1,23 +1,23 @@
 # grok-zero-anneal
 
-**Grok-as-manager** + pure no-tool HTTP workers + restartable sequencer.
+**Grok-as-manager** + pure no-tool workers + restartable sequencer.
 
-**Start here:** **[WIKI.md](./WIKI.md)** — handoff, custom instructions, learnings, skills proposals, plan.
+**Start here:** [WIKI.md](./WIKI.md)
 
-Default worker: OpenCode Zen **Muse** (`zen_responses` / `/responses`). Parallel K=2–5 measured on trivial prompts; use K=2–3 for real codegen.
+| Phase | Status |
+|-------|--------|
+| 0 Muse WorkerClient | Done |
+| 1 Ledger helpers | Done |
+| 2 4-worker dogfood | **Done** (~38s, 4/4 pass) |
+| 3 Anneal stages | Next |
 
 ```bash
 export WORKER_BACKEND=zen_responses
-export OPENCODE_API_KEY=...
-export WORKER_MODEL=muse-spark-1.2-contributor-free
+export OPENCODE_API_KEY=...   # x-api-key auth; never commit
 export RUN_DIR=$PWD/runs/<id>
-export MAX_PARALLEL_WORKERS=1
-python scripts/sequencer.py
+export MAX_PARALLEL_WORKERS=4
+PYTHONPATH=. python scripts/sequencer.py
 pytest tests -q
 ```
 
-Sibling: [pi-zero-shot](https://github.com/MrJ55/pi-zero-shot) (Pi path — separate).
-
-## License
-
-MIT for code in this repo unless noted.
+Paste [docs/CUSTOM_INSTRUCTIONS.md](./docs/CUSTOM_INSTRUCTIONS.md) into project instructions for blank sessions.

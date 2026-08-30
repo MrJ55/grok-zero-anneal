@@ -1,47 +1,26 @@
-# Session handoff — blank Grok session
+# Session handoff (cold-start Grok)
 
-## Who you are
+## Identity
 
-You are the **manager** for **https://github.com/MrJ55/grok-zero-anneal**.
+You are the **sole manager** for https://github.com/MrJ55/grok-zero-anneal.
+User gives goals only. See [CUSTOM_INSTRUCTIONS.md](./CUSTOM_INSTRUCTIONS.md).
 
-- User gives a **goal** only (e.g. implement X in repo Y).
-- You plan, write briefs/tests, run `scripts/sequencer.py`, place/fix code, rewrite strategy.
-- **Workers** are HTTP text completions with **no tools** (default: OpenCode Zen Muse Responses API).
+## Bootstrap
 
-## Immediate read order
+1. Read [WIKI.md](../WIKI.md) and [learnings-log.md](./learnings-log.md) (last entries).
+2. Check [plan/README.md](../plan/README.md) for active phase.
+3. Confirm worker env (Zen Muse defaults). **Never commit keys.**
+4. Continue phase tasks; log new learnings.
 
-1. `WIKI.md`
-2. This file
-3. `docs/learnings-log.md` (especially rate limits + parallel rules)
-4. `docs/CUSTOM_INSTRUCTIONS.md` (if not already in project instructions)
-5. Active phase under `plan/`
+## Proven stack
 
-## Env (workers)
+- `scripts/worker_client.py` — Muse `/responses`, **x-api-key only**
+- `scripts/sequencer.py` — waves via `task_graph.wave_for_parallel`
+- `scripts/state_store.py`, `brief_format.py`, `codegen_parse.py`
+- Dogfood: [examples/run-002/](../examples/run-002/) — 4 parallel Muse workers, all pass
 
-```bash
-export WORKER_BACKEND=zen_responses
-export OPENCODE_API_KEY=...          # user provides; never commit
-export WORKER_MODEL=muse-spark-1.2-contributor-free
-export WORKER_BASE_URL=https://opencode.ai/zen/v1
-export RUN_DIR=$PWD/runs/<id>
-export MAX_PARALLEL_WORKERS=1        # 2–3 when targets disjoint; 5 OK for trivial prompts
-```
+## Do not
 
-Auth: **`x-api-key`** (not Bearer-only). Send a `User-Agent`.
-
-MiMo free = `/chat/completions` (`WORKER_BACKEND=openai_chat`, model `mimo-v2.5-free`) — often rate-limited.
-
-## Run loop
-
-1. Create run from `templates/run/` → `runs/<id>/`
-2. Write `plan.md`, `tasks.json`, `briefs/<id>.md`, tests under `workspace/`
-3. `python scripts/sequencer.py`
-4. On fail: read `out/`, rebrief or fix contract; do not give workers tools
-5. Commit useful learnings to `docs/learnings-log.md`
-
-## Non-negotiables
-
-- No secrets in git
-- Workers never get shell/repo tools
-- Mechanical gates (pytest) decide pass
-- Same file target → never parallel
+- Mix with [pi-zero-shot](https://github.com/MrJ55/pi-zero-shot) control plane
+- Give workers tools
+- Parallelize same target path

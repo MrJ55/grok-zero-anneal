@@ -1,0 +1,8 @@
+{
+  "tasks": [
+    {"id": "d1-slugify", "target": "pkg/textutil.py", "deps": [], "pytest_args": ["tests/test_textutil.py", "-q"]},
+    {"id": "d2-clamp", "target": "pkg/numutil.py", "deps": [], "pytest_args": ["tests/test_numutil.py", "-q"]},
+    {"id": "d3-parsekv", "target": "pkg/parseutil.py", "deps": [], "pytest_args": ["tests/test_parseutil.py", "-q"]},
+    {"id": "d4-merkle", "target": "pkg/hashutil.py", "deps": [], "pytest_args": ["tests/test_hashutil.py", "-q"]}
+  ]
+}

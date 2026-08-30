@@ -1,52 +1,35 @@
-# Cost model — strong manager + cheap/free workers
+# Cost and throughput model
 
-## Thesis
+## What “savings” means here
 
-**Cost (and effective token) savings** come primarily from:
+Not primarily “fewer total tokens.”  
+Primary win: **move bulk codegen tokens to free/cheap workers** while the **strong model (Grok) spends tokens only on orchestration** (briefs, gates, integration).
 
-1. **Cheap or free models doing bulk codegen** (OpenCode Zen Muse free, MiMo free when available, later Go/low-tier chat models).
-2. **A stronger model (Grok) doing orchestration only** — decompose, brief, place, gate, replan — not writing every line.
+| Path | Token locus | Typical $ |
+|------|-------------|-----------|
+| Frontier single-agent does all code | Strong model | High |
+| Grok manager + Muse workers | Strong: briefs/judgment; Muse: code | Strong ↓; Muse ~$0 on free tier |
 
-Secondary benefits: **wall-clock** reduction from parallel workers (K=2–5); **context efficiency** from micro-briefs vs one long tool-using agent session.
+## Parallelism
 
-Parallelism does **not** reduce total worker tokens (≈ K × brief work). It reduces time-to-green when units are independent.
+| Effect | Parallel K workers |
+|--------|---------------------|
+| **Wall-clock** | Often ~1/K for independent units (network-bound) |
+| **Worker token volume** | Still ~×K (each unit pays its own prompt+completion) |
+| **$ on free Muse** | Still ~$0 until rate limits |
+| **Manager tokens** | Slightly higher (merge/verify wave) but << K full agent sessions |
 
-## Roles vs spend
+### Measured (2026-08-30)
 
-| Role | Model class | Pays for | Should stay small |
-|------|-------------|----------|-------------------|
-| Manager (Grok) | Strong / frontier | Planning, contracts, integration, failures | Avoid pasting full worker transcripts; don’t re-implement easy units |
-| Worker | Free / cheap | Code text for one unit | Tight briefs; no tools; no repo crawl |
-| Sequencer | None (Python) | 0 model $ | — |
+**Trivial prompts (ok0…ok4):** K=5 wall ~2.4s (all success).
 
-## Rough estimate template (fill per run)
+**Real codegen dogfood (run-002):** 4 independent pure-Python units, Muse, **K=4**, **first-try pass all**, wall **~38s**, manager did **not** rewrite implementations.
 
-```text
-Manager turns:     ~M  (strong model)
-Worker calls:      ~W  (free/cheap)
-Worker tokens:     ~Tw_in + Tw_out  (often $0 on free tier)
-Manager tokens:    ~Tm_in + Tm_out  (main $ if any)
-Wall time:         sequential sum vs parallel max of wave
-```
+Approx worker output sizes (chars of raw reply): slugify ~389, clamp ~264, merkle ~287, parse_kv larger — order of hundreds of tokens per unit, not tens of thousands.
 
-**Break-even vs single strong agent:** when worker pass rate is high enough that manager tokens + free worker tokens &lt; one large strong-model coding session with tools.
+## When parallel does not save
 
-## Per-phase cost intent
-
-| Phase | Manager (strong) | Workers (free/cheap) | Expected $ pattern |
-|-------|------------------|----------------------|---------------------|
-| **0** Client + Muse path | Design/integration | Smoke + parallel probe | Near-$0 workers; manager docs/code |
-| **1** Ledger helpers | Mostly manager-authored infra | Optional | Near-$0 |
-| **2** Multi-unit dogfood | Tests, briefs, gates, fixes | **3–4 codegen units** on Muse | Workers $0; manager = orchestration only if units pass |
-| **3** Stages | Policy code | Small pure functions | Low |
-| **4–5** Playbooks / package | Docs + thin CLI | Optional | Low |
-
-## Recording rule
-
-After each meaningful run, append `docs/learnings-log.md` with:
-
-- K, model, backend
-- Worker calls / pass rate
-- Whether manager rewrote code (bad — cost leaks to strong model)
-- Wall time vs sequential estimate
-- Explicit note: **worker $ ≈ 0 (free tier)** or measured spend
+- Dependent tasks (must sequence)
+- Shared file targets
+- Rate limits turning K into retries (manager time + wall up)
+- Bad briefs → manager rewrites code (destroys the thesis)

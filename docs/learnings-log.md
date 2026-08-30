@@ -2,53 +2,51 @@
 
 Append-only operational memory. Newest at bottom.
 
-**Cost thesis:** savings = **free/cheap workers for code** + **strong model for orchestration only**. See [cost-model.md](./cost-model.md).
+See also [cost-model.md](./cost-model.md), [problems-and-solutions.md](./problems-and-solutions.md).
 
 ---
 
 ## 2026-08-30 — First OpenRouter / Laguna smoke (historical)
 
-**Setup:** OpenRouter Laguna free; unit `parse_worker_response`.
-
-**Cost:** Worker free tier; manager (Grok) paid for harness + integration after extract bug.
-
-**Lesson:** Worker can own implementation $; extract/harness bugs shift work back to strong model — fix plumbing so manager stays orchestrator.
-
+**Goal / phase:** Smoke parse helper  
+**Worker ($):** Laguna free via OpenRouter  
+**Manager work:** Harness + integration after extract bug  
+**Problems / solutions:** Nested ``` in docstring truncated extract → outer-fence + prompt hygiene  
 **Artifact:** `examples/run-001/`
 
 ---
 
-## 2026-08-30 — OpenCode Zen auth and models
+## 2026-08-30 — Zen auth and models
 
-- MiMo chat: `x-api-key` works; Bearer 401; free **429** common.
-- Muse Responses: works; parse `output_text`; no `messages` field on `/responses`.
-
-**Cost decision:** Prefer Muse free for workers; keep strong model off the codegen path.
-
----
-
-## 2026-08-30 — Parallel Muse throughput
-
-| K | Success | Wall (approx) |
-|---|---------|----------------|
-| 2–5 | OK | K=5 ~2.4s trivial prompts |
-
-**Wall-clock:** parallel helps.  
-**Token cost:** total worker tokens still ~×K.  
-**$ cost:** still ~$0 on free Muse if within limits.
-
-**Real savings vs frontier single-agent:** not “fewer tokens,” but **$0 (or cents) per unit** of codegen + fewer frontier tokens on bulk code.
+- Bearer → 401; **`x-api-key` → OK**
+- Sending **both** Bearer + x-api-key caused sequencer 401s in parallel dogfood
+- **Fix:** x-api-key only for `zen_responses`
+- MiMo free: 429 common; Muse Responses preferred
 
 ---
 
-## 2026-08-30 — Phase 0–1 cost posture
+## 2026-08-30 — Parallel Muse throughput (trivial)
 
-| Phase | Worker $ | Manager role |
-|-------|----------|--------------|
-| 0 | ~$0 Muse smokes | Client + docs |
-| 1 | ~$0 | Ledger modules mostly manager-written (infra; acceptable) |
+| K | Success | Wall |
+|---|---------|------|
+| 5 | 5/5 | ~2.4s |
 
-Phase 2 target: **workers write the demo library; manager only tests/briefs/gates.**
+Wall-clock scales; token volume still ×K; $ ~0 on free.
+
+---
+
+## 2026-08-30 — Phase 2 dogfood (real codegen, K=4)
+
+**Goal / phase:** Phase 2 multi-unit  
+**Worker model ($):** Muse free  
+**Manager work:** tests + briefs + sequencer only; **no implementation rewrites**  
+**K / wall / pass rate:** K=4, **~38.4s**, **4/4 first attempt**  
+**Cost note:** worker $≈0; strong model not used for bulk code  
+**Units:** slugify, clamp, parse_kv, merkle_join  
+**Problems / solutions:** Initial 401 from dual auth headers → x-api-key only  
+**Artifact:** `examples/run-002/`
+
+**Throughput takeaway:** Independent micro-units + tight tests → parallel workers deliver full feature slice in <1 minute wall without manager coding.
 
 ---
 
@@ -57,9 +55,9 @@ Phase 2 target: **workers write the demo library; manager only tests/briefs/gate
 ```markdown
 ## YYYY-MM-DD — title
 **Goal / phase:**
-**Worker model ($):** free Muse / …
+**Worker model ($):**
 **Manager work:** orchestrate only? or rewrote code?
 **K / wall / pass rate:**
-**Cost note:** worker $≈0; strong model used for …
+**Cost note:**
 **Problems / solutions:**
 ```
