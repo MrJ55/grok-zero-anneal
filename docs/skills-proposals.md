@@ -1,26 +1,24 @@
-# Proposed Grok Skills (user-created)
+# Grok Skills for grok-zero-anneal
 
-Package these when the platform allows project skills.
+Full skill packages live under [`skills/`](../skills/). Each folder is a standard Grok skill (`SKILL.md` frontmatter + body).
 
-## 1. `gza-run-init`
-Copy `templates/run/` → `runs/<slug>/`; print Muse env exports.
+| Skill | When to use |
+|-------|-------------|
+| [gza-run-init](../skills/gza-run-init/SKILL.md) | New run directory / ledger scaffold |
+| [gza-brief](../skills/gza-brief/SKILL.md) | Write or fix pure-worker briefs |
+| [gza-dispatch](../skills/gza-dispatch/SKILL.md) | Run sequencer / parallel wave |
+| [gza-learn](../skills/gza-learn/SKILL.md) | Append learnings-log entry |
+| [gza-phase](../skills/gza-phase/SKILL.md) | Phase status / what next |
+| [gza-auth-check](../skills/gza-auth-check/SKILL.md) | Verify Zen Muse auth (no key echo) |
 
-## 2. `gza-brief`
-Emit `briefs/<id>.md` from structured fields via `brief_format` rules (no repo dumps, no nested fences).
+## How to install in Grok
 
-## 3. `gza-dispatch`
-Verify env; set `MAX_PARALLEL_WORKERS` from ready-set (cap 4); run sequencer; summarize state + failures.
+1. Open Grok **Custom skills** (or project skills) for the grok-zero-anneal project.
+2. For each skill folder, create a skill named exactly as `name:` in frontmatter.
+3. Paste the full `SKILL.md` contents (including YAML frontmatter).
+4. Keep [docs/CUSTOM_INSTRUCTIONS.md](./CUSTOM_INSTRUCTIONS.md) as always-on manager identity; skills are procedural add-ons.
 
-## 4. `gza-learn`
-Append dated entry to `docs/learnings-log.md` (K, wall, pass rate, $, problems).
-
-## 5. `gza-phase`
-Read plan status; list open manager vs worker tasks; propose next wave.
-
-## 6. `gza-auth-check`
-One-shot Muse `pong` with x-api-key; report 200 vs 401/429 (no key echo).
-
-| Mechanism | Use |
-|-----------|-----|
-| Custom instructions | Always-on manager identity |
-| Skills | Procedural bundles above |
+| Mechanism | Use for |
+|-----------|--------|
+| Custom instructions | Always-on identity (manager, Muse defaults, no worker tools) |
+| Skills | On-demand procedures above |
