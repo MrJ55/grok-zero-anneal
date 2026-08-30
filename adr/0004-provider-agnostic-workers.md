@@ -1,22 +1,23 @@
-# ADR 0004: Provider-agnostic workers (OpenCode Go default)
+# ADR 0004: Provider-agnostic workers (Zen Muse default)
 
 ## Status
 
-Accepted
+Accepted (updated 2026-08-30)
 
 ## Context
 
-The first smoke used OpenRouter + Laguna free. The product must not depend on OpenRouter. Next runs use **OpenCode Go** (low-cost open models via OpenCode’s Go endpoint).
+First smoke used OpenRouter + Laguna. Product must not depend on OpenRouter. OpenCode Zen free **Muse Spark contributor** works via **Responses API**; MiMo free uses chat completions but hit rate limits.
 
 ## Decision
 
-1. Workers are **any OpenAI-compatible chat completion** API (no tools).
-2. Runtime configuration: base URL, API key env, model id.
-3. **Default backend for upcoming work:** OpenCode Go.
-4. OpenRouter examples are historical only.
+1. Workers are pure text over HTTP (no tools).
+2. Config: `WORKER_BACKEND`, `WORKER_API_KEY` / `OPENCODE_API_KEY`, `WORKER_MODEL`, `WORKER_BASE_URL`.
+3. **Default:** `zen_responses` + `muse-spark-1.2-contributor-free` + `https://opencode.ai/zen/v1`.
+4. **Alt:** `openai_chat` for MiMo / OpenCode Go-style `/chat/completions`.
+5. Auth: send **`x-api-key`** (Zen); also send Bearer for compatible gateways.
+6. OpenRouter examples are historical only.
 
 ## Consequences
 
-- Sequencer refactored behind `WorkerClient`.
-- Docs and plans reference Go, not OpenRouter, as primary.
-- Local or alternate compatible endpoints remain valid.
+- Sequencer uses `scripts/worker_client.py`.
+- Parallel waves allowed when task targets are disjoint (`MAX_PARALLEL_WORKERS`).
